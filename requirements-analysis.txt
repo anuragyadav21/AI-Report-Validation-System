@@ -1,0 +1,10 @@
+# Full project: analysis + OpenAI fill/validate (see README)
+pandas>=2.0
+openpyxl>=3.1
+pingouin>=0.5
+scipy>=1.10
+statsmodels>=0.14
+python-docx>=1.0
+matplotlib>=3.7
+openai>=1.0
+python-dotenv>=1.0
