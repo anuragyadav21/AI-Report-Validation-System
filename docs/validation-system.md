@@ -4,6 +4,18 @@
 
 This document summarizes the **rubric**, **experimental design**, **statistics**, **software architecture**, and **how to run** the **AI Report Validation System** prompt-comparison pipeline. It matches the implementation in this repository (see also [README.md](../README.md)).
 
+### Checklist — course / submission requirements → where to find it
+
+| Requirement | Covered? | Location |
+|---------------|----------|----------|
+| Brief documentation for the validation system | Yes | Whole file; especially **§1**, **§4**, **§6**. |
+| **Validation criteria table** (dimension name, description, scale, benchmark) + **contrast vs LAB Likert** | Yes | **§1** (table + qualitative benchmarks + “How this differs…”). |
+| **Experimental design** (which prompts, scores per prompt, sample size) | Yes | **§2** (table). |
+| **Statistical analysis** (tests, **hypotheses**, **results**, **interpretation**) | **Partial** | **§3**: hypotheses and **which** tests (RM **ANOVA**, **paired t** post-hocs, **OLS regression**) are fully described. **Numeric F, p, and your interpretation** are **not** fixed in this file — they depend on your workbook. Fill them from your generated report (**§3 “Your results”**) or paste stdout / Word output. |
+| **System design** + **AI reviewer’s role** | Yes | **§4** (numbered steps + Mermaid diagram). |
+| **Technical details** (API keys, packages, file structure) | Yes | **§5** (+ root `README.md`). |
+| **Usage instructions** (install, setup, validate, experiment) | Yes | **§6** (step-by-step commands). |
+
 ---
 
 ## 1. Validation criteria table
@@ -58,11 +70,23 @@ The primary report is produced by **`scripts/analyze_prompt_significance.py`** (
 
 ### Tests run (high level)
 
+This project uses a **repeated-measures** design, so the **primary** inference for “which prompt differs?” is **not** an independent-samples **t**-test on pooled rows. Instead:
+
 1. **Descriptive statistics** — mean and SD of **Overall** by prompt (complete cases only: scenarios with non-missing A, B, and C).
-2. **One-way repeated-measures ANOVA** — within factor = **Prompt**; subject = **ScenarioID**; dependent variable = **Overall** (implemented with **Pingouin**; sphericity corrections as appropriate).
+2. **One-way repeated-measures ANOVA** — within factor = **Prompt**; subject = **ScenarioID**; dependent variable = **Overall** (implemented with **Pingouin**; sphericity corrections as appropriate). This is the **omnibus** test for differences across A, B, and C.
 3. **Partial η²** — effect size for the prompt main effect.
-4. **Post-hoc** — paired **t** tests for contrasts (e.g. B−A, C−A, C−B) with **Holm** adjustment across the family of tests.
-5. **Regression** — **OLS** of **Overall** on prompt indicators (reference **A**) with **cluster-robust** standard errors (**cluster = scenario**), aligning with the repeated structure of rows.
+4. **Post-hoc** — **paired** **t** tests on scenario-level differences (e.g. B−A, C−A, C−B) with **Holm** adjustment across the family of tests. (These are **paired** / **dependent** contrasts, aligned with the RM design.)
+5. **Regression** — **OLS** of **Overall** on prompt indicators (reference **A**) with **cluster-robust** standard errors (**cluster = scenario**), reporting marginal mean differences with uncertainty; complements the ANOVA / post-hoc view.
+
+### Where your numeric test results live
+
+Static documentation cannot state **your** **F**, **df**, **p**, or which pairs differ — those come from **your** scored workbook. After you run:
+
+```bash
+python3 scripts/analyze_prompt_significance.py --workbook YOUR.xlsx
+```
+
+use the generated **`*_significance_report.docx`** or **`--stdout-only`** output for **§3 “Your results”** in this file or for your write-up.
 
 ### Your results (fill in from your report)
 
